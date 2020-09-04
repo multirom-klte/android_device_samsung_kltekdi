@@ -28,52 +28,25 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "vendor_init.h"
 #include "property_service.h"
-#include "log.h"
 #include "util.h"
 
-#include "init_msm8974.h"
-
-#define ISMATCH(a, b) (!strncmp((a), (b), PROP_VALUE_MAX))
-
-void cdma_properties(char const *default_cdma_sub,
-        char const *operator_numeric, char const *operator_alpha)
+void vendor_load_properties()
 {
-    property_set("ril.subscription.types", "NV,RUIM");
-    property_set("ro.cdma.home.operator.numeric", operator_numeric);
-    property_set("ro.cdma.home.operator.alpha", operator_alpha);
-    property_set("ro.telephony.default_cdma_sub", default_cdma_sub);
-    property_set("ro.telephony.default_network", "10");
-    property_set("ro.telephony.ril.config", "newDriverCallU,newDialCode");
-    property_set("telephony.lteOnCdmaDevice", "1");
+	char bootloader[PROP_VALUE_MAX];
+
+	property_get("ro.bootloader", bootloader);
+
+	if (strstr(bootloader, "SC04F")) {
+		/* kltedcm */
+		property_set("ro.product.model", "SC-04F");
+		property_set("ro.product.name", "kltedcm");
+	} else {
+		/* kltekdi */
+		property_set("ro.product.model", "SCL23");
+		property_set("ro.product.name", "kltekdi");
+	}
+	property_set("ro.product.device", "klte");
 }
-
-void init_target_properties()
-{
-    char platform[PROP_VALUE_MAX];
-    char bootloader[PROP_VALUE_MAX];
-    char device[PROP_VALUE_MAX];
-    char devicename[PROP_VALUE_MAX];
-    int rc;
-
-    rc = property_get("ro.board.platform", platform);
-    if (!rc || !ISMATCH(platform, ANDROID_TARGET))
-        return;
-
-    property_get("ro.bootloader", bootloader);
-
-        property_set("ro.build.fingerprint", "samsung/SCL23/SCL23:4.4.2/KOT49H/SCL23KDU1AND1:user/release-keys");
-        property_set("ro.build.description", "kltekdi-user 4.4.2 KOT49H SCL23KDU1AND1 release-keys");
-        property_set("ro.product.model", "SCL23");
-        property_set("ro.product.device", "kltekdi");
-        property_set("telephony.sms.pseudo_multipart", "1");
-        cdma_properties("1", "44054", "KDDI");
-
-    property_get("ro.product.device", device);
-    strlcpy(devicename, device, sizeof(devicename));
-    INFO("Found bootloader id %s setting build properties for %s device\n", bootloader, devicename);
-}
-
